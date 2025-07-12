@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Player Profile Card</title>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         body {
             margin: 0;
@@ -378,10 +379,16 @@
         .submit-button:active {
             transform: scale(0.95);
         }
+
+        .loading {
+            display: none;
+            color: #00d4ff;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
-    <div class="card">
+    <div class="card" id="player-card">
         <div class="header">
             <div class="experience">
                 <div class="experience-label">Years of Experience</div>
@@ -419,6 +426,7 @@
         </div>
         <button id="next-button" class="next-button">Next</button>
         <button id="submit-button" class="submit-button hidden">Submit via WhatsApp</button>
+        <div id="loading" class="loading">Preparing screenshot...</div>
     </div>
 
     <script>
@@ -427,6 +435,7 @@
         const avatarPlaceholder = document.getElementById('avatar-placeholder');
         const nextButton = document.getElementById('next-button');
         const submitButton = document.getElementById('submit-button');
+        const loading = document.getElementById('loading');
 
         // Avatar upload functionality
         avatarUpload.addEventListener('change', function(event) {
@@ -449,39 +458,67 @@
         });
 
         // Submit button click handler
-        submitButton.addEventListener('click', function() {
-            // Get all form values
-            const experience = document.getElementById('experience-input').value || '0';
-            const playerLevel = document.getElementById('player-experience-value').value || 'Level';
-            const inGameName = document.getElementById('ing-input').value || 'Not provided';
-            const kdRatio = document.getElementById('kd-value').value || '0.0';
-            const winRate = document.getElementById('win-value').value || '0%';
-            const playerRole = document.getElementById('role-input').value || 'Not provided';
-            const hasAvatar = avatarImg.style.display !== 'none';
+        submitButton.addEventListener('click', async function() {
+            // Show loading
+            submitButton.classList.add('hidden');
+            loading.style.display = 'block';
             
-            // Create the message
-            let message = `*New Player Registration*\n\n`;
-            message += `*Years of Experience:* ${experience}\n`;
-            message += `*Player Level:* ${playerLevel}\n`;
-            message += `*In-Game Name:* ${inGameName}\n`;
-            message += `*K/D Ratio:* ${kdRatio}\n`;
-            message += `*Win Rate:* ${winRate}\n`;
-            message += `*Player Role:* ${playerRole}\n`;
-            message += `*Avatar Uploaded:* ${hasAvatar ? 'Yes' : 'No'}\n\n`;
-            message += `_Form submitted automatically_`;
-            
-            // Encode the message for WhatsApp URL
-            const encodedMessage = encodeURIComponent(message);
-            
-            // Open WhatsApp with the pre-filled message
-            window.open(`https://wa.me/917307711016?text=${encodedMessage}`, '_blank');
-            
-            // Reset the form after submission
-            setTimeout(() => {
-                submitButton.classList.add('hidden');
-                nextButton.classList.remove('hidden');
-            }, 1000);
+            try {
+                // Capture the card as image
+                const canvas = await html2canvas(document.getElementById('player-card'), {
+                    scale: 2, // Higher quality
+                    logging: false,
+                    useCORS: true,
+                    allowTaint: true
+                });
+                
+                // Convert canvas to image data URL
+                const imageData = canvas.toDataURL('image/png');
+                
+                // Create a temporary link to download the image
+                const link = document.createElement('a');
+                link.download = 'player-profile.png';
+                link.href = imageData;
+                document.body.appendChild(link);
+                
+                // Create WhatsApp message with basic info
+                const experience = document.getElementById('experience-input').value || '0';
+                const inGameName = document.getElementById('ing-input').value || 'Not provided';
+                
+                let message = `*Player Profile Submission*\n\n`;
+                message += `*In-Game Name:* ${inGameName}\n`;
+                message += `*Experience:* ${experience} years\n\n`;
+                message += `_Please check the attached profile card for complete details_`;
+                
+                // Encode the message for WhatsApp URL
+                const encodedMessage = encodeURIComponent(message);
+                
+                // Open WhatsApp with the message
+                window.open(`https://wa.me/917307711016?text=${encodedMessage}`, '_blank');
+                
+                // Trigger download after a short delay
+                setTimeout(() => {
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    // Show instructions
+                    alert("Your player profile has been captured. Please:\n1. Send the downloaded image via WhatsApp\n2. The message has been pre-filled for you");
+                    
+                    // Reset form
+                    setTimeout(() => {
+                        loading.style.display = 'none';
+                        submitButton.classList.add('hidden');
+                        nextButton.classList.remove('hidden');
+                    }, 1000);
+                }, 500);
+                
+            } catch (error) {
+                console.error('Error capturing image:', error);
+                loading.style.display = 'none';
+                submitButton.classList.remove('hidden');
+                alert("Error capturing profile. Please take a screenshot manually.");
+            }
         });
     </script>
 </body>
-</html>
+                        </html></html>
